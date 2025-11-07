@@ -2,63 +2,52 @@
 
 import { createBrowserRouter } from "react-router-dom";
 import { startProgress, doneProgress } from "./lib/utils";
+import { withAuthGuard, withPublicGuard } from "./routerGuards";
+
+async function loadDashboard() {
+  startProgress();
+  try {
+    const { default: DashboardPage } = await import(
+      "./features/dashboard/presentaion/views/DashboardPage"
+    );
+    return { Component: withAuthGuard(DashboardPage) };
+  } finally {
+    doneProgress();
+  }
+}
+
+async function loadLogin() {
+  startProgress();
+  try {
+    const { default: LoginPage } = await import(
+      "./features/auth/presentaion/views/LoginPage"
+    );
+    return { Component: withPublicGuard(LoginPage) };
+  } finally {
+    doneProgress();
+  }
+}
 
 const router = createBrowserRouter([
   {
     path: "/",
-    async lazy() {
-      startProgress();
-      try {
-        const { default: JokePage } = await import(
-          "./features/joke/presentaion/views/JokePage"
-        );
-        return { Component: JokePage };
-      } finally {
-        doneProgress();
-      }
-    },
+    lazy: loadDashboard,
   },
   {
-    path: "/joke",
-    async lazy() {
-      startProgress();
-      try {
-        const { default: JokePage } = await import(
-          "./features/joke/presentaion/views/JokePage"
-        );
-        return { Component: JokePage };
-      } finally {
-        doneProgress();
-      }
-    },
+    path: "/dashboard",
+    lazy: loadDashboard,
+  },
+  {
+    path: "/login",
+    lazy: loadLogin,
   },
   {
     path: "/auth",
-    async lazy() {
-      startProgress();
-      try {
-        const { default: LoginPage } = await import(
-          "./features/auth/presentaion/views/LoginPage"
-        );
-        return { Component: LoginPage };
-      } finally {
-        doneProgress();
-      }
-    },
+    lazy: loadLogin,
   },
   {
     path: "/auth/login",
-    async lazy() {
-      startProgress();
-      try {
-        const { default: LoginPage } = await import(
-          "./features/auth/presentaion/views/LoginPage"
-        );
-        return { Component: LoginPage };
-      } finally {
-        doneProgress();
-      }
-    },
+    lazy: loadLogin,
   },
   {
     path: "*",

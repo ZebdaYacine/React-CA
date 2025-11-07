@@ -32,7 +32,7 @@ export default function LoginPage() {
         return;
       }
 
-      navigate("/joke", { replace: true });
+      navigate("/dashboard", { replace: true });
     });
 
     return () => {

@@ -1,7 +1,4 @@
-import type {
-  AuthCredentials,
-  AuthResult,
-} from "../../domain/entities/auth";
+import type { AuthCredentials, AuthResult } from "../../domain/entities/auth";
 
 const DUMMY_USERS = [
   { username: "admin", password: "password123", token: "admin-token" },
@@ -9,18 +6,10 @@ const DUMMY_USERS = [
   { username: "guest", password: "guest", token: "guest-token" },
 ];
 
-function simulateNetworkDelay(ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
 export async function authenticate(
   credentials: AuthCredentials
 ): Promise<AuthResult> {
   try {
-    await simulateNetworkDelay(300);
-
     const match = DUMMY_USERS.find(
       (user) =>
         user.username === credentials.username &&

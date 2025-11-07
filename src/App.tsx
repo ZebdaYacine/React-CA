@@ -13,7 +13,7 @@ function ThemeToggleButton() {
       style={{
         position: "fixed",
         top: "1rem",
-        right: "1rem",
+        left: "1rem",
         padding: "0.5rem 1rem",
         borderRadius: "8px",
         border: "none",
