@@ -1,0 +1,37 @@
+type TPSummary {
+  totalGenere: Int!
+  totalSolde: Int!
+}
+
+type TPByMonth {
+  month: String!
+  tpGenere: Int!
+  tpSolde: Int!
+}
+
+type FilterOptions {
+  years: [Int!]!
+  communes: [String!]!
+  tpTypes: [String!]!
+}
+
+type InsuredUser {
+  nom: String!
+  prenom: String!
+  nomPere: String
+  nomMere: String
+  tpSolde: Int
+  tpGenere: Int
+  nPension: String
+  dateNaissance: String
+  dateDeces: String
+  typeTP: String
+  commune: String
+}
+
+type Query {
+  tpSummary(year: Int!, wilaya: String!, commune: String): TPSummary!
+  tpByMonth(year: Int!, wilaya: String!, commune: String): [TPByMonth!]!
+  insuredUsers(wilaya: String, commune: String): [InsuredUser!]!
+  filterOptions: FilterOptions!
+}

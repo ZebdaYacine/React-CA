@@ -1,0 +1,5 @@
+./alias.go
+./compare.go
+./imports.go
+./packages.go
+./util.go
