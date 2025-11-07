@@ -41,42 +41,51 @@ export default function LoginPage() {
   }, [resource, navigate]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-      <div className="flex w-full max-w-md flex-col gap-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <main className="flex min-h-screen flex-col items-center justify-center ">
+      <div className="flex w-full max-w-md flex-col gap-6 rounded-lg border  p-6 shadow-sm">
+        <div className="flex justify-center">
+          <img
+            src="/cnr.png"
+            alt="CNR logo"
+            className="h-16 w-auto"
+            loading="lazy"
+          />
+        </div>
         <header className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Sign in</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Use one of the demo accounts to explore the authentication flow.
+          <h1 className="text-2xl font-semibold ">CNR-TP</h1>
+          <p className="mt-1 text-sm ">
+            Tableau de bord descriptif pour gérer les trop-perçus au niveau
+            d'agence{" "}
           </p>
         </header>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <label className="flex flex-col gap-1 text-left text-sm font-medium text-gray-700">
-            Username
+            identification
             <input
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               type="text"
               autoComplete="username"
-              className="h-10 rounded-md border border-gray-300 px-3 text-sm shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="h-10 rounded-md border  px-3 text-sm shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               placeholder="admin"
             />
           </label>
 
           <label className="flex flex-col gap-1 text-left text-sm font-medium text-gray-700">
-            Password
+            mot de pass
             <input
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               type="password"
               autoComplete="current-password"
-              className="h-10 rounded-md border border-gray-300 px-3 text-sm shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="h-10 rounded-md border  px-3 text-sm shadow-inner transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               placeholder="password123"
             />
           </label>
 
           <Button type="submit" disabled={isDisabled}>
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "authentifier..." : "Authentifier"}
           </Button>
         </form>
 
