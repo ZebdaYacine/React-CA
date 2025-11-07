@@ -23,12 +23,12 @@ export function useJokeViewModel() {
     DashboardResult,
     Error,
     string
-  >("joke/random", async () => {
+  >("dashboard/random", async () => {
     const result = await dashboardUseCase.execute();
     return result;
   });
 
-  const loadJoke = () => {
+  const loadDashBoard = () => {
     const resultPromise = trigger().catch(
       (error): DashboardResult => ({
         error: error instanceof Error ? error : new Error("Unknown error"),
@@ -40,7 +40,7 @@ export function useJokeViewModel() {
 
   return {
     isLoading: isMutating,
-    loadJoke,
+    loadDashBoard: loadDashBoard,
     resource,
   };
 }

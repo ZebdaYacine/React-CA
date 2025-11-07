@@ -13,57 +13,27 @@ import {
 } from "recharts";
 import type { DataKey } from "recharts/types/util/types";
 
-export type NestedData = {
-  [echeance: string]: {
-    [wilaya: string]: {
-      [commune: string]: {
-        tpSolde: number;
-        tpGenere: number;
-      };
-    };
-  };
+export type TPSeriesPoint = {
+  month: string;
+  tpGenere: number;
+  tpSolde: number;
 };
 
 type TPEcheanceProps = {
-  data: NestedData;
-  wilaya: string;
-  selectedYear: number;
-  selectedCommune: string;
-  isFullWilaya: boolean;
+  data: TPSeriesPoint[];
+  isLoading?: boolean;
 };
 
-export function TPEcheance({
-  data,
-  wilaya,
-  selectedYear,
-  selectedCommune,
-  isFullWilaya,
-}: TPEcheanceProps) {
+export function TPEcheance({ data, isLoading = false }: TPEcheanceProps) {
   const [hoveringDataKey, setHoveringDataKey] = useState<DataKey<unknown>>();
 
   const processedData = useMemo(() => {
-    const results: { echeance: string; tpSolde: number; tpGenere: number }[] =
-      [];
-
-    for (const echeance in data) {
-      if (!echeance.startsWith(`${selectedYear}-`)) continue;
-      const wilayaData = data[echeance][wilaya];
-      if (!wilayaData) continue;
-
-      let totalSolde = 0;
-      let totalGenere = 0;
-
-      for (const commune in wilayaData) {
-        if (!isFullWilaya && commune !== selectedCommune) continue;
-        totalSolde += wilayaData[commune].tpSolde;
-        totalGenere += wilayaData[commune].tpGenere;
-      }
-
-      results.push({ echeance, tpSolde: totalSolde, tpGenere: totalGenere });
-    }
-
-    return results.sort((a, b) => a.echeance.localeCompare(b.echeance));
-  }, [data, wilaya, selectedCommune, isFullWilaya, selectedYear]);
+    return data.map((point, index) => ({
+      echeance: `${String(index + 1).padStart(2, "0")} - ${point.month}`,
+      tpSolde: point.tpSolde,
+      tpGenere: point.tpGenere,
+    }));
+  }, [data]);
 
   const handleMouseEnter = (payload: LegendPayload) =>
     setHoveringDataKey(payload.dataKey);
@@ -71,6 +41,16 @@ export function TPEcheance({
 
   const tpGenereOpacity = hoveringDataKey === "tpSolde" ? 0.4 : 1;
   const tpSoldeOpacity = hoveringDataKey === "tpGenere" ? 0.4 : 1;
+
+  if (!processedData.length) {
+    return (
+      <div className="flex items-center justify-center h-full py-12 text-slate-500">
+        {isLoading
+          ? "Chargement des courbes..."
+          : "Aucune donnée disponible pour cette sélection."}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 w-full">

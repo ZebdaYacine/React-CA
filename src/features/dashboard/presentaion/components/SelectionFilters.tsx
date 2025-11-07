@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "../../../../core/components/ui/select";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "../../../../core/components/ui/button";
 
 type SelectionFiltersProps = {
   availableYears: number[];
@@ -22,6 +23,8 @@ type SelectionFiltersProps = {
   isFullWilaya: boolean;
   setIsFullWilaya: (value: boolean) => void;
   fullWilayaValue?: string;
+  isLoading?: boolean;
+  onOpenUploadModal?: () => void;
 };
 
 export default function SelectionFilters({
@@ -34,6 +37,8 @@ export default function SelectionFilters({
   isFullWilaya,
   setIsFullWilaya,
   fullWilayaValue = "__full-wilaya__",
+  isLoading = false,
+  onOpenUploadModal,
 }: SelectionFiltersProps) {
   const [communeSearch, setCommuneSearch] = useState("");
   const [isCommuneSelectOpen, setIsCommuneSelectOpen] = useState(false);
@@ -57,6 +62,9 @@ export default function SelectionFilters({
           <p className="text-base text-slate-500">
             Ajustez l&apos;année et le périmètre pour recalculer les KPI.
           </p>
+          {isLoading && (
+            <p className="text-sm text-slate-400">Chargement des options...</p>
+          )}
         </div>
 
         {/* Filters */}
@@ -147,6 +155,17 @@ export default function SelectionFilters({
                 </SelectGroup>
               </SelectContent>
             </Select>
+            {onOpenUploadModal && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-2"
+                onClick={onOpenUploadModal}
+              >
+                Importer des listes
+              </Button>
+            )}
           </div>
         </div>
       </div>

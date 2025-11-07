@@ -33,17 +33,24 @@ export type InsuredUser = {
   commune?: string;
 };
 
+const DEFAULT_TP_TYPES = ["Mensuel", "Trimestriel", "Exceptionnel"];
+
 type InsuredUsersTableProps = {
   users: InsuredUser[];
   title?: string;
+  tpTypes?: string[];
 };
 
 export default function InsuredUsersTable({
   users,
   title = "Liste des assurés",
+  tpTypes = DEFAULT_TP_TYPES,
 }: InsuredUsersTableProps) {
   const PAGE_SIZE = 50;
-  const types = ["Tous", "Mensuel", "Trimestriel", "Exceptionnel"];
+  const typeOptions = useMemo(() => {
+    const uniqueTypes = Array.from(new Set(tpTypes));
+    return ["Tous", ...uniqueTypes];
+  }, [tpTypes]);
   const [selectedType, setSelectedType] = useState<string>("Tous");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -58,6 +65,12 @@ export default function InsuredUsersTable({
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedType, users]);
+
+  useEffect(() => {
+    if (!typeOptions.includes(selectedType)) {
+      setSelectedType("Tous");
+    }
+  }, [selectedType, typeOptions]);
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
@@ -104,7 +117,7 @@ export default function InsuredUsersTable({
               <SelectValue placeholder="Choisir le type de TP" />
             </SelectTrigger>
             <SelectContent>
-              {types.map((type) => (
+              {typeOptions.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
                 </SelectItem>
