@@ -1,6 +1,0 @@
-./binder.go
-./config.go
-./exec.go
-./initialisms.go
-./package.go
-./resolver.go

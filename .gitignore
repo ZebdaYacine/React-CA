@@ -37,6 +37,7 @@ storybook-static/
 .cypress/
 .cypress-cache/
 
+front-end/node_modules/
 front-end/.env
 front-end/.env.*
 front-end/.npm/
