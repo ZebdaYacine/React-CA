@@ -7,147 +7,104 @@ package graph
 import (
 	"back-end/graph/model"
 	"context"
-	"math/rand"
-	"time"
-)
-
-var (
-	availableYears    = []int32{2023, 2024, 2025}
-	availableCommunes = []string{
-		"Aflou",
-		"Ain Madhi",
-		"Brida",
-		"El Ghicha",
-		"Gueltat Sidi Saad",
-		"Hassi R'mel",
-		"Ksar El Hirane",
-		"Laghouat",
-		"Oued Morra",
-		"Sidi Makhlouf",
-		"El Haouaita",
-		"Kheneg",
-		"Tadjmout",
-		"Tadjerouna",
-		"Hadj Mechri",
-		"Taouiala",
-		"Ain Sidi Ali",
-		"El Beidha",
-		"Hassi Delaa",
-		"Benacer Benchohra",
-		"Oued M'zi",
-		"El Assafia",
-	}
-	availableTpTypes = []string{"Mensuel", "Trimestriel", "Exceptionnel"}
+	"fmt"
 )
 
 // TpSummary is the resolver for the tpSummary field.
 func (r *queryResolver) TpSummary(ctx context.Context, year int32, wilaya string, commune *string) (*model.TPSummary, error) {
-	genMin, genRange := 20000, 30000
-	soldeMin, soldeRange := 10000, 30000
-	if commune != nil && *commune != "" {
-		genMin, genRange = 5000, 10000
-		soldeMin, soldeRange = 3000, 8000
+	if r.DashboardService == nil {
+		return nil, fmt.Errorf("dashboard service is not configured")
+	}
+
+	var communeValue string
+	if commune != nil {
+		communeValue = *commune
+	}
+
+	summary, err := r.DashboardService.TpSummary(ctx, int(year), wilaya, communeValue)
+	if err != nil {
+		return nil, err
 	}
 
 	return &model.TPSummary{
-		TotalGenere: int32(rand.Intn(genRange) + genMin),
-		TotalSolde:  int32(rand.Intn(soldeRange) + soldeMin),
+		TotalGenere: clampToInt32(summary.TotalGenere),
+		TotalSolde:  clampToInt32(summary.TotalSolde),
 	}, nil
 }
 
 // TpByMonth is the resolver for the tpByMonth field.
 func (r *queryResolver) TpByMonth(ctx context.Context, year int32, wilaya string, commune *string) ([]*model.TPByMonth, error) {
-	genMin, genRange := 2000, 3000
-	soldeMin, soldeRange := 1000, 2000
-	if commune != nil && *commune != "" {
-		genMin, genRange = 800, 1200
-		soldeMin, soldeRange = 400, 800
+	if r.DashboardService == nil {
+		return nil, fmt.Errorf("dashboard service is not configured")
 	}
 
-	var months []*model.TPByMonth
-	for i := 1; i <= 12; i++ {
-		months = append(months, &model.TPByMonth{
-			Month:    time.Month(i).String(),
-			TpGenere: int32(rand.Intn(genRange) + genMin),
-			TpSolde:  int32(rand.Intn(soldeRange) + soldeMin),
+	var communeValue string
+	if commune != nil {
+		communeValue = *commune
+	}
+
+	stats, err := r.DashboardService.TpByMonth(ctx, int(year), wilaya, communeValue)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.TPByMonth, 0, len(stats))
+	for _, stat := range stats {
+		result = append(result, &model.TPByMonth{
+			Month:    stat.Month.String(),
+			TpGenere: clampToInt32(stat.TpGenere),
+			TpSolde:  clampToInt32(stat.TpSolde),
 		})
 	}
-	return months, nil
+	return result, nil
 }
 
 // InsuredUsers is the resolver for the insuredUsers field.
 func (r *queryResolver) InsuredUsers(ctx context.Context, wilaya *string, commune *string) ([]*model.InsuredUser, error) {
-	users := []*model.InsuredUser{
-		{
-			Nom:           "Benali",
-			Prenom:        "Karim",
-			NomPere:       stringPtr("Ahmed"),
-			NomMere:       stringPtr("Fatma"),
-			TpGenere:      int32Ptr(5000),
-			TpSolde:       int32Ptr(3800),
-			NPension:      stringPtr("P12345"),
-			DateNaissance: stringPtr("1965-07-20"),
-			TypeTp:        stringPtr("Mensuel"),
-			Commune:       stringPtr("Laghouat"),
-		},
-		{
-			Nom:           "Saidi",
-			Prenom:        "Nadia",
-			NomPere:       stringPtr("Abdelkader"),
-			NomMere:       stringPtr("Leila"),
-			TpGenere:      int32Ptr(4200),
-			TpSolde:       int32Ptr(2500),
-			NPension:      stringPtr("P67890"),
-			DateNaissance: stringPtr("1972-11-03"),
-			DateDeces:     stringPtr("2023-09-01"),
-			TypeTp:        stringPtr("Exceptionnel"),
-			Commune:       stringPtr("Aflou"),
-		},
-		{
-			Nom:           "Khellaf",
-			Prenom:        "Yasmine",
-			NomPere:       stringPtr("Mourad"),
-			NomMere:       stringPtr("Kenza"),
-			TpGenere:      int32Ptr(5200),
-			TpSolde:       int32Ptr(4100),
-			NPension:      stringPtr("P654321"),
-			DateNaissance: stringPtr("1980-03-12"),
-			TypeTp:        stringPtr("Trimestriel"),
-			Commune:       stringPtr("Oued Morra"),
-		},
-		{
-			Nom:           "Zerari",
-			Prenom:        "Riad",
-			NomPere:       stringPtr("Sofiane"),
-			NomMere:       stringPtr("Warda"),
-			TpGenere:      int32Ptr(3000),
-			TpSolde:       int32Ptr(1500),
-			NPension:      stringPtr("P456789"),
-			DateNaissance: stringPtr("1978-08-02"),
-			TypeTp:        stringPtr("Mensuel"),
-			Commune:       stringPtr("Hassi R'mel"),
-		},
+	if r.DashboardService == nil {
+		return nil, fmt.Errorf("dashboard service is not configured")
 	}
 
-	if commune != nil && *commune != "" {
-		filtered := make([]*model.InsuredUser, 0, len(users))
-		for _, user := range users {
-			if user.Commune != nil && *user.Commune == *commune {
-				filtered = append(filtered, user)
-			}
-		}
-		return filtered, nil
+	var wilayaValue, communeValue string
+	if wilaya != nil {
+		wilayaValue = *wilaya
+	}
+	if commune != nil {
+		communeValue = *commune
 	}
 
+	records, err := r.DashboardService.InsuredUsers(ctx, wilayaValue, communeValue, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	users := make([]*model.InsuredUser, 0, len(records))
+	for _, record := range records {
+		users = append(users, mapInsuredUser(record))
+	}
 	return users, nil
 }
 
 // FilterOptions is the resolver for the filterOptions field.
 func (r *queryResolver) FilterOptions(ctx context.Context) (*model.FilterOptions, error) {
+	if r.DashboardService == nil {
+		return nil, fmt.Errorf("dashboard service is not configured")
+	}
+
+	options, err := r.DashboardService.FilterOptions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	years := make([]int32, 0, len(options.Years))
+	for _, year := range options.Years {
+		years = append(years, int32(year))
+	}
+
 	return &model.FilterOptions{
-		Years:    append([]int32(nil), availableYears...),
-		Communes: append([]string(nil), availableCommunes...),
-		TpTypes:  append([]string(nil), availableTpTypes...),
+		Years:    years,
+		Communes: append([]string(nil), options.Communes...),
+		TpTypes:  append([]string(nil), options.TpTypes...),
 	}, nil
 }
 

@@ -59,18 +59,19 @@ func requireAdmin(authService *auth.Service) gin.HandlerFunc {
 		}
 
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer"))
-		username, err := authService.ValidateToken(token)
+		claims, err := authService.ValidateToken(token)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token invalide"})
 			return
 		}
 
-		if username != "admin" {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "accès réservé à l'administrateur"})
+		if claims == nil || !strings.EqualFold(claims.Role, "admin") {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "access restricted to administrator"})
 			return
 		}
 
-		c.Set("username", username)
+		c.Set("username", claims.Username)
+		c.Set("role", claims.Role)
 		c.Next()
 	}
 }

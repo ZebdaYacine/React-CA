@@ -1,52 +1,86 @@
 package auth
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 type Service struct {
-	users  map[string]string
+	db     *gorm.DB
 	secret []byte
 	ttl    time.Duration
 }
 
-func NewService(users map[string]string, secret []byte, ttl time.Duration) *Service {
-	copied := make(map[string]string, len(users))
-	for k, v := range users {
-		copied[k] = v
+type User struct {
+	ID       uint   `gorm:"column:ID;primaryKey"`
+	Username string `gorm:"column:USERNAME"`
+	Password string `gorm:"column:PASSWORD"`
+	Role     string `gorm:"column:ROLE"`
+}
+
+func (User) TableName() string {
+	return "USERS"
+}
+
+type Claims struct {
+	Username string
+	Role     string
+}
+
+func NewService(db *gorm.DB, secret []byte, ttl time.Duration) *Service {
+	if db == nil {
+		panic("auth service: nil database handle")
 	}
 	return &Service{
-		users:  copied,
+		db:     db,
 		secret: secret,
 		ttl:    ttl,
 	}
 }
 
 func (s *Service) Authenticate(username, password string) (string, error) {
-	expected, ok := s.users[username]
-	if !ok || expected != password {
+	if username == "" || password == "" {
 		return "", errors.New("invalid credentials")
 	}
-	return s.signToken(username)
+
+	var user User
+	if err := s.db.Where("USERNAME = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", errors.New("invalid credentials")
+		}
+		return "", fmt.Errorf("failed to fetch user: %w", err)
+	}
+
+	if !strings.EqualFold(user.Password, hashPassword(password)) {
+		return "", errors.New("invalid credentials")
+	}
+
+	return s.signToken(user.Username, user.Role)
 }
 
-func (s *Service) signToken(username string) (string, error) {
+func (s *Service) signToken(username, role string) (string, error) {
+	now := time.Now()
 	claims := jwt.MapClaims{
-		"sub": username,
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(s.ttl).Unix(),
+		"sub":  username,
+		"role": role,
+		"iat":  now.Unix(),
+		"exp":  now.Add(s.ttl).Unix(),
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(s.secret)
 }
 
-func (s *Service) ValidateToken(tokenString string) (string, error) {
+func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 	if tokenString == "" {
-		return "", errors.New("missing token")
+		return nil, errors.New("missing token")
 	}
 
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
@@ -56,30 +90,28 @@ func (s *Service) ValidateToken(tokenString string) (string, error) {
 		return s.secret, nil
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if !token.Valid {
-		return "", errors.New("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	mapClaims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", errors.New("invalid token claims")
+		return nil, errors.New("invalid token claims")
 	}
 
-	username, _ := claims["sub"].(string)
+	username, _ := mapClaims["sub"].(string)
+	role, _ := mapClaims["role"].(string)
 	if username == "" {
-		return "", errors.New("token missing subject")
+		return nil, errors.New("token missing subject")
 	}
 
-	return username, nil
+	return &Claims{Username: username, Role: role}, nil
 }
 
-func DefaultUsers() map[string]string {
-	return map[string]string{
-		"admin": "password123",
-		"coder": "secret",
-		"guest": "guest",
-	}
+func hashPassword(pwd string) string {
+	sum := sha256.Sum256([]byte(pwd))
+	return hex.EncodeToString(sum[:])
 }

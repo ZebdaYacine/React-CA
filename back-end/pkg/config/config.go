@@ -10,6 +10,10 @@ const (
 	defaultPort       = ":8080"
 	defaultJWTSecret  = "super-secret-key"
 	defaultTokenHours = 24
+
+	defaultDBMaxIdleConns       = 5
+	defaultDBMaxOpenConns       = 10
+	defaultDBConnMaxLifetimeMin = 5
 )
 
 func ServerPort() string {
@@ -33,4 +37,30 @@ func TokenTTL() time.Duration {
 		}
 	}
 	return time.Duration(defaultTokenHours) * time.Hour
+}
+
+func DatabaseDSN() string {
+	return os.Getenv("DB_DSN")
+}
+
+func DatabaseMaxIdleConns() int {
+	return positiveIntFromEnv("DB_MAX_IDLE_CONNS", defaultDBMaxIdleConns)
+}
+
+func DatabaseMaxOpenConns() int {
+	return positiveIntFromEnv("DB_MAX_OPEN_CONNS", defaultDBMaxOpenConns)
+}
+
+func DatabaseConnMaxLifetime() time.Duration {
+	minutes := positiveIntFromEnv("DB_CONN_MAX_LIFETIME_MIN", defaultDBConnMaxLifetimeMin)
+	return time.Duration(minutes) * time.Minute
+}
+
+func positiveIntFromEnv(key string, fallback int) int {
+	if val := os.Getenv(key); val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed > 0 {
+			return parsed
+		}
+	}
+	return fallback
 }
