@@ -123,11 +123,12 @@ func (s *Service) TpByMonth(ctx context.Context, year int, wilaya, commune strin
 	}
 
 	whereClause, args := filters.whereClause(true)
+	dateExpr := dateColumnExpr(aliasedColumn("Date_Creation_TP"))
 	baseQuery := fmt.Sprintf(`SELECT
-		MONTH(Date_Creation_TP) AS month_value,
+		MONTH(%s) AS month_value,
 		COALESCE(SUM(Mont_TP), 0) AS total_genere,
 		COALESCE(SUM(Solde_TP), 0) AS total_solde
-		FROM %s`, pensionTableExpr())
+		FROM %s`, dateExpr, pensionTableExpr())
 	query := applyWhere(baseQuery, whereClause) + " GROUP BY month_value ORDER BY month_value"
 
 	var rows []struct {
@@ -167,13 +168,13 @@ func (s *Service) TpByMonth(ctx context.Context, year int, wilaya, commune strin
 	return result, nil
 }
 
-func (s *Service) InsuredUsers(ctx context.Context, wilaya, commune string, limit int) ([]InsuredPerson, error) {
-	filters, err := newQueryFilters(0, wilaya, commune)
+func (s *Service) InsuredUsers(ctx context.Context, year int, wilaya, commune string, limit int) ([]InsuredPerson, error) {
+	filters, err := newQueryFilters(year, wilaya, commune)
 	if err != nil {
 		return nil, err
 	}
 
-	whereClause, args := filters.whereClause(false)
+	whereClause, args := filters.whereClause(year > 0)
 	if limit <= 0 {
 		limit = defaultInsuredRowsLimit
 	}
@@ -258,11 +259,18 @@ func (s *Service) FilterOptions(ctx context.Context) (*FilterOptions, error) {
 	}, nil
 }
 
+func quoteIdentifier(ident string) string {
+	return "`" + strings.ReplaceAll(ident, "`", "``") + "`"
+}
+
 func (s *Service) fetchYears(ctx context.Context) ([]int, error) {
-	query := fmt.Sprintf(`SELECT DISTINCT YEAR(Date_Creation_TP) AS year_value
-		FROM %s
-		WHERE Date_Creation_TP IS NOT NULL
-		ORDER BY year_value`, pensionViewName)
+	query := fmt.Sprintf(`
+	SELECT DISTINCT 
+		YEAR(STR_TO_DATE(Date_Creation_TP, '%%d/%%m/%%Y')) AS year_value
+	FROM %s
+	WHERE Date_Creation_TP IS NOT NULL
+	ORDER BY year_value;
+`, quoteIdentifier(pensionViewName))
 
 	var rows []struct {
 		Year sql.NullInt64 `gorm:"column:year_value"`
@@ -393,7 +401,10 @@ func (f queryFilters) whereClause(includeYear bool) (string, []interface{}) {
 	args := make([]interface{}, 0, 3)
 
 	if includeYear && f.Year > 0 {
-		conditions = append(conditions, fmt.Sprintf("YEAR(%s) = ?", aliasedColumn("Date_Creation_TP")))
+		conditions = append(conditions, fmt.Sprintf(
+			"YEAR(%s) = ?",
+			dateColumnExpr(aliasedColumn("Date_Creation_TP")),
+		))
 		args = append(args, f.Year)
 	}
 	if f.CommuneCode != "" {
@@ -472,6 +483,10 @@ func aliasedColumn(column string) string {
 		return column
 	}
 	return fmt.Sprintf("%s.%s", pensionTableAlias, column)
+}
+
+func dateColumnExpr(column string) string {
+	return fmt.Sprintf("STR_TO_DATE(%s, '%%d/%%m/%%Y')", column)
 }
 
 func (s *Service) assureJoinClause() string {

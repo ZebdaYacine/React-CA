@@ -68,7 +68,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		FilterOptions func(childComplexity int) int
-		InsuredUsers  func(childComplexity int, wilaya *string, commune *string) int
+		InsuredUsers  func(childComplexity int, year int32, wilaya *string, commune *string) int
 		TpByMonth     func(childComplexity int, year int32, wilaya string, commune *string) int
 		TpSummary     func(childComplexity int, year int32, wilaya string, commune *string) int
 	}
@@ -88,7 +88,7 @@ type ComplexityRoot struct {
 type QueryResolver interface {
 	TpSummary(ctx context.Context, year int32, wilaya string, commune *string) (*model.TPSummary, error)
 	TpByMonth(ctx context.Context, year int32, wilaya string, commune *string) ([]*model.TPByMonth, error)
-	InsuredUsers(ctx context.Context, wilaya *string, commune *string) ([]*model.InsuredUser, error)
+	InsuredUsers(ctx context.Context, year int32, wilaya *string, commune *string) ([]*model.InsuredUser, error)
 	FilterOptions(ctx context.Context) (*model.FilterOptions, error)
 }
 
@@ -213,7 +213,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.InsuredUsers(childComplexity, args["wilaya"].(*string), args["commune"].(*string)), true
+		return e.complexity.Query.InsuredUsers(childComplexity, args["year"].(int32), args["wilaya"].(*string), args["commune"].(*string)), true
 	case "Query.tpByMonth":
 		if e.complexity.Query.TpByMonth == nil {
 			break
@@ -391,16 +391,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_insuredUsers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "wilaya", ec.unmarshalOString2ᚖstring)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "year", ec.unmarshalNInt2int32)
 	if err != nil {
 		return nil, err
 	}
-	args["wilaya"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commune", ec.unmarshalOString2ᚖstring)
+	args["year"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "wilaya", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["commune"] = arg1
+	args["wilaya"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "commune", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["commune"] = arg2
 	return args, nil
 }
 
@@ -1008,7 +1013,7 @@ func (ec *executionContext) _Query_insuredUsers(ctx context.Context, field graph
 		ec.fieldContext_Query_insuredUsers,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().InsuredUsers(ctx, fc.Args["wilaya"].(*string), fc.Args["commune"].(*string))
+			return ec.resolvers.Query().InsuredUsers(ctx, fc.Args["year"].(int32), fc.Args["wilaya"].(*string), fc.Args["commune"].(*string))
 		},
 		nil,
 		ec.marshalNInsuredUser2ᚕᚖbackᚑendᚋgraphᚋmodelᚐInsuredUserᚄ,

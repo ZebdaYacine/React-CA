@@ -32,6 +32,6 @@ type InsuredUser {
 type Query {
   tpSummary(year: Int!, wilaya: String!, commune: String): TPSummary!
   tpByMonth(year: Int!, wilaya: String!, commune: String): [TPByMonth!]!
-  insuredUsers(wilaya: String, commune: String): [InsuredUser!]!
+  insuredUsers(year: Int!, wilaya: String, commune: String): [InsuredUser!]!
   filterOptions: FilterOptions!
 }

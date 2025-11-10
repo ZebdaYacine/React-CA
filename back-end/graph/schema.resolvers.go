@@ -60,7 +60,7 @@ func (r *queryResolver) TpByMonth(ctx context.Context, year int32, wilaya string
 }
 
 // InsuredUsers is the resolver for the insuredUsers field.
-func (r *queryResolver) InsuredUsers(ctx context.Context, wilaya *string, commune *string) ([]*model.InsuredUser, error) {
+func (r *queryResolver) InsuredUsers(ctx context.Context, year int32, wilaya *string, commune *string) ([]*model.InsuredUser, error) {
 	if r.DashboardService == nil {
 		return nil, fmt.Errorf("dashboard service is not configured")
 	}
@@ -73,7 +73,7 @@ func (r *queryResolver) InsuredUsers(ctx context.Context, wilaya *string, commun
 		communeValue = *commune
 	}
 
-	records, err := r.DashboardService.InsuredUsers(ctx, wilayaValue, communeValue, 0)
+	records, err := r.DashboardService.InsuredUsers(ctx, int(year), wilayaValue, communeValue, 0)
 	if err != nil {
 		return nil, err
 	}
