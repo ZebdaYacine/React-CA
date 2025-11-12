@@ -55,6 +55,7 @@ front-end/coverage/
 
 # ---- Go / Back-end -------------------------------------------------------
 back-end/bin/
+back-end/cmd/uploads
 back-end/tmp/
 back-end/dist/
 back-end/coverage/
