@@ -55,7 +55,17 @@ func startGinServer() {
 	graphQLServer := newGraphQLServer(&graph.Resolver{DashboardService: dashboardService})
 
 	authService := auth.NewService(db, config.JWTSecret(), config.TokenTTL())
-	uploadService, err := upload.NewService("uploads")
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to acquire sql.DB handle: %v", err)
+	}
+
+	excelImporter, err := upload.NewExcelImporter(sqlDB)
+	if err != nil {
+		log.Fatalf("failed to initialize excel importer: %v", err)
+	}
+
+	uploadService, err := upload.NewService("uploads", excelImporter)
 	if err != nil {
 		log.Fatalf("failed to prepare upload directory: %v", err)
 	}

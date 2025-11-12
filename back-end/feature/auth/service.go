@@ -45,24 +45,28 @@ func NewService(db *gorm.DB, secret []byte, ttl time.Duration) *Service {
 	}
 }
 
-func (s *Service) Authenticate(username, password string) (string, error) {
+func (s *Service) Authenticate(username, password string) (string, string, error) {
 	if username == "" || password == "" {
-		return "", errors.New("invalid credentials")
+		return "", "", errors.New("invalid credentials")
 	}
 
 	var user User
 	if err := s.db.Where("USERNAME = ?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", errors.New("invalid credentials")
+			return "", "", errors.New("invalid credentials")
 		}
-		return "", fmt.Errorf("failed to fetch user: %w", err)
+		return "", "", fmt.Errorf("failed to fetch user: %w", err)
 	}
 
 	if !strings.EqualFold(user.Password, hashPassword(password)) {
-		return "", errors.New("invalid credentials")
+		return "", "", errors.New("invalid credentials")
 	}
 
-	return s.signToken(user.Username, user.Role)
+	token, err := s.signToken(user.Username, user.Role)
+	if err != nil {
+		return "", "", err
+	}
+	return token, user.Role, nil
 }
 
 func (s *Service) signToken(username, role string) (string, error) {

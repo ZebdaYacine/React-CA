@@ -28,6 +28,7 @@ type loginRequest struct {
 type loginResponse struct {
 	Username string `json:"username"`
 	Token    string `json:"token"`
+	Role     string `json:"role"`
 }
 
 type loginErrorResponse struct {
@@ -45,7 +46,7 @@ func (ac *AuthController) LoginRequest(c *gin.Context) {
 
 	log.Printf("login attempt for user %q", req.Username)
 
-	token, err := ac.authService.Authenticate(req.Username, req.Password)
+	token, role, err := ac.authService.Authenticate(req.Username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, loginErrorResponse{Message: err.Error()})
 		return
@@ -54,5 +55,6 @@ func (ac *AuthController) LoginRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, loginResponse{
 		Username: req.Username,
 		Token:    token,
+		Role:     role,
 	})
 }
